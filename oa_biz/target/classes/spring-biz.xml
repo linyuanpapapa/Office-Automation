@@ -1,0 +1,45 @@
+﻿<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:aop="http://www.springframework.org/schema/aop"
+       xmlns:tx="http://www.springframework.org/schema/tx"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+    http://www.springframework.org/schema/context
+    http://www.springframework.org/schema/context/spring-context.xsd
+    http://www.springframework.org/schema/aop
+    http://www.springframework.org/schema/aop/spring-aop.xsd
+    http://www.springframework.org/schema/tx
+    http://www.springframework.org/schema/tx/spring-tx.xsd">
+    
+    <!--引入另一配置文件-->
+    <import resource="spring-dao.xml"></import>
+    <!--添加需要扫描的包-->
+    <context:component-scan base-package="com.yuan.oa.biz"></context:component-scan>
+    <!--开启Spring基于注解的AOP配置-->
+    <aop:aspectj-autoproxy></aop:aspectj-autoproxy>
+    <!--配置事务管理器-->
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource"></property>
+    </bean>
+    <!--事务属性中的readOnly标志表示对应的事务应该被最优化为只读事务。
+        如果值为true就会告诉Spring我这个方法里面没有insert或者update，
+        你只需要提供只读的数据库Connection就行了，
+        这种执行效率会比read-write的Connection高，所以这是一个最优化提示。-->
+    <tx:advice id="interceptor" transaction-manager="transactionManager">
+        <tx:attributes>
+            <tx:method name="get*" read-only="true"/>
+            <tx:method name="find*" read-only="true"></tx:method>
+            <tx:method name="search*" read-only="true"></tx:method>
+            <tx:method name="*" propagation="REQUIRED"></tx:method>
+            <!--REQUIRED表示当前方法需要在事务环境下运行-->
+        </tx:attributes>
+    </tx:advice>
+
+    <!--切入点配置-->
+    <aop:config>
+        <aop:pointcut id="txpc" expression="execution(* com.yuan.oa.biz.*.*(..))"></aop:pointcut>
+        <aop:advisor advice-ref="interceptor" pointcut-ref="txpc"></aop:advisor>
+    </aop:config>
+
+</beans>
